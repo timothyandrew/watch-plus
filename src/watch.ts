@@ -17,7 +17,7 @@ const RESET = `${ESC}[0m`;
 const BELL = "\x07";
 
 // Strip ANSI escape sequences for comparison
-function stripAnsi(str: string): string {
+export function stripAnsi(str: string): string {
   // eslint-disable-next-line no-control-regex
   return str.replace(/\x1b\[[0-9;]*[a-zA-Z]/g, "").replace(/\x1b\][^\x07]*\x07/g, "");
 }
@@ -66,7 +66,7 @@ function formatHeader(opts: WatchOptions): string {
   return `${BOLD}${left}${" ".repeat(padding)}${right}${RESET}\n\n`;
 }
 
-function truncateLine(line: string, maxWidth: number): string {
+export function truncateLine(line: string, maxWidth: number): string {
   // We need to handle ANSI codes — they have zero display width
   let displayWidth = 0;
   let result = "";
@@ -118,7 +118,7 @@ function renderOutput(
   return lines.join("\n");
 }
 
-function highlightDiffs(
+export function highlightDiffs(
   oldLines: string[],
   newLines: string[],
   permanent: boolean,
