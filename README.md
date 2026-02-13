@@ -1,5 +1,5 @@
 <p align="center">
-  <img src=".github/logo.svg" alt="watch+" width="520" />
+  <img src=".github/logo.svg" alt="watch+" width="140" />
 </p>
 
 <p align="center">
@@ -22,8 +22,8 @@ You're already running `watch` to keep an eye on things. But you can't stare at 
 ```mermaid
 flowchart TD
     Command["🐚 Your Shell Command"] -->|runs every N seconds| WatchPlus["⚡ watch+"]
-    WatchPlus --> Terminal["🖥️ Terminal\nfullscreen with diff highlight"]
-    WatchPlus -->|output changed?| Email["📧 Resend\nemail alert"]
+    WatchPlus --> Terminal["🖥️ Terminal<br/>fullscreen with diff highlight"]
+    WatchPlus -->|output changed?| Email["📧 Resend<br/>email alert"]
 
     style Command fill:#1e293b,stroke:#475569,color:#e2e8f0
     style WatchPlus fill:#2d1f4e,stroke:#7c3aed,color:#e2e8f0
