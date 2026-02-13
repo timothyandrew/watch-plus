@@ -1,0 +1,7 @@
+{
+  "resendApiKey": "re_123456789",
+  "defaultTo": "alerts@example.com",
+  "defaultFrom": "watch+@mydomain.com",
+  "defaultCooldown": "5m",
+  "defaultInterval": 2
+}

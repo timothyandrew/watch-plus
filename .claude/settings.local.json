@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(watch:*)",
+      "WebSearch",
+      "WebFetch(domain:www.npmjs.com)",
+      "WebFetch(domain:resend.com)",
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "Bash(stty:*)",
+      "Bash(gtimeout:*)",
+      "Bash(echo:*)",
+      "Bash(./watch+:*)"
+    ]
+  }
+}
