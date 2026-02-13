@@ -19,26 +19,16 @@ You're already running `watch` to keep an eye on things. But you can't stare at 
 
 **watch+** is a drop-in replacement for GNU `watch` that adds email alerts via [Resend](https://resend.com). Same flags, same behavior — plus a `--email` flag that changes everything.
 
-```
-              ┌─────────────┐
-              │  your shell  │
-              │   command    │
-              └──────┬───────┘
-                     │ runs every N seconds
-                     ▼
-              ┌──────────────┐
-              │   watch+     │──────────┐
-              │              │          │ output changed?
-              └──────┬───────┘          ▼
-                     │          ┌──────────────┐
-                     │          │  📧 Resend   │
-                     ▼          │  email alert │
-              ┌──────────────┐  └──────────────┘
-              │  terminal    │
-              │  (fullscreen │
-              │   with diff  │
-              │   highlight) │
-              └──────────────┘
+```mermaid
+flowchart TD
+    Command["🐚 Your Shell Command"] -->|runs every N seconds| WatchPlus["⚡ watch+"]
+    WatchPlus --> Terminal["🖥️ Terminal\nfullscreen with diff highlight"]
+    WatchPlus -->|output changed?| Email["📧 Resend\nemail alert"]
+
+    style Command fill:#1e293b,stroke:#475569,color:#e2e8f0
+    style WatchPlus fill:#2d1f4e,stroke:#7c3aed,color:#e2e8f0
+    style Terminal fill:#164e63,stroke:#06b6d4,color:#e2e8f0
+    style Email fill:#4c1d95,stroke:#a78bfa,color:#e2e8f0
 ```
 
 ## Quickstart
