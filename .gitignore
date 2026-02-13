@@ -6,8 +6,9 @@ out
 dist
 *.tgz
 
-# compiled binary
+# compiled binaries
 /watch+
+/watch+-linux-amd64
 
 # code coverage
 coverage

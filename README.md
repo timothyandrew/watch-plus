@@ -6,13 +6,22 @@ Built with Bun + TypeScript. Uses [Resend](https://resend.com) for email deliver
 
 ## Install
 
+### macOS (Apple Silicon)
+
 ```bash
 bun install
 bun run build
 # produces a standalone ./watch+ binary
 ```
 
-Or run directly:
+### Linux (amd64)
+
+```bash
+bun install
+bun build --compile --target=bun-linux-x64 src/index.ts --outfile watch+-linux-amd64
+```
+
+### Development
 
 ```bash
 bun run src/index.ts -n 1 date
