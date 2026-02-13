@@ -9,7 +9,14 @@
       "Bash(stty:*)",
       "Bash(gtimeout:*)",
       "Bash(echo:*)",
-      "Bash(./watch+:*)"
+      "Bash(./watch+:*)",
+      "Bash(watch+:*)",
+      "Bash(git -C /Users/tim/dev/watch+ status)",
+      "Bash(git -C /Users/tim/dev/watch+ diff)",
+      "Bash(git -C /Users/tim/dev/watch+ log --oneline -5)",
+      "Bash(git -C /Users/tim/dev/watch+ add src/index.ts .claude/settings.local.json)",
+      "Bash(git -C:*)",
+      "Bash(git -C /Users/tim/dev/watch+ push)"
     ]
   }
 }
