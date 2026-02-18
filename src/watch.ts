@@ -293,6 +293,11 @@ export async function startWatch(opts: WatchOptions): Promise<void> {
 
     process.stdout.write(renderOutput(displayOutput, opts, headerLines));
 
+    // Flush any queued email notifications after cooldown expires
+    if (emailSender) {
+      emailSender.flushPending().catch(() => {});
+    }
+
     previousOutput = currentOutput;
     previousStripped = currentStripped;
 
