@@ -18,6 +18,11 @@ export interface WatchOptions {
   cooldown: number; // ms
   subject?: string;
   resendApiKey?: string;
+
+  // Gist extensions
+  gist?: boolean;
+  gistId?: string;
+  ghToken?: string;
 }
 
 export interface Config {

@@ -3,6 +3,7 @@
 import { Command } from "commander";
 import { loadConfig, resolveOptions } from "./config.ts";
 import { startWatch } from "./watch.ts";
+import { getGitHubToken } from "./gist.ts";
 
 const VERSION = "1.0.0";
 
@@ -37,6 +38,8 @@ program
   )
   .option("--subject <text>", "custom email subject")
   .option("--api-key <key>", "Resend API key")
+  .option("--gist", "write output to a new private GitHub Gist")
+  .option("--gist-id <id>", "write output to an existing GitHub Gist")
   .allowUnknownOption(false)
   .action(async (commandArgs: string[], cliOpts) => {
     const config = await loadConfig();
@@ -61,6 +64,23 @@ program
         console.error(
           "watch+: --email requires --from (sender address).\n" +
             "Use --from or set defaultFrom in ~/.watch+/config.json"
+        );
+        process.exit(1);
+      }
+    }
+
+    // Validate gist configuration
+    if (opts.gist && opts.gistId) {
+      console.error("watch+: --gist and --gist-id are mutually exclusive.");
+      process.exit(1);
+    }
+
+    if (opts.gist || opts.gistId) {
+      try {
+        opts.ghToken = await getGitHubToken();
+      } catch (err) {
+        console.error(
+          err instanceof Error ? err.message : String(err),
         );
         process.exit(1);
       }

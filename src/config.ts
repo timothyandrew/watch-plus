@@ -55,6 +55,8 @@ interface CliFlags {
   cooldown?: string;
   subject?: string;
   apiKey?: string;
+  gist?: boolean;
+  gistId?: string;
 }
 
 export function resolveOptions(
@@ -103,5 +105,8 @@ export function resolveOptions(
     cooldown,
     subject: cli.subject,
     resendApiKey,
+    gist: cli.gist ?? false,
+    gistId: cli.gistId,
+    ghToken: undefined,
   };
 }

@@ -2,6 +2,7 @@ import { hostname } from "os";
 import type { WatchOptions, ExecutionResult } from "./types.ts";
 import { hasChanged } from "./diff.ts";
 import { createEmailSender } from "./email.ts";
+import { createGistSender, type GistSender } from "./gist.ts";
 
 // ANSI helpers
 const ESC = "\x1b";
@@ -157,6 +158,19 @@ export async function startWatch(opts: WatchOptions): Promise<void> {
     emailSender = createEmailSender(opts.resendApiKey);
   }
 
+  // Set up gist sender if configured
+  let gistSender: GistSender | null = null;
+  if ((opts.gist || opts.gistId) && opts.ghToken) {
+    const commandStr = opts.command.join(" ");
+    gistSender = createGistSender(opts.ghToken, commandStr, opts.gistId);
+    try {
+      const url = await gistSender.initialize(`watch+: waiting for first output of '${commandStr}'`);
+      process.stderr.write(`Gist: ${url}\n`);
+    } catch {
+      gistSender = null;
+    }
+  }
+
   const commandStr = opts.command.join(" ");
   const defaultSubject = `watch+: change detected in '${commandStr}'`;
 
@@ -248,11 +262,21 @@ export async function startWatch(opts: WatchOptions): Promise<void> {
           .catch(() => {});
       }
 
+      // Update gist
+      if (gistSender) {
+        gistSender.updateGist(currentStripped).catch(() => {});
+      }
+
       // chgexit: exit on change
       if (opts.chgexit) {
         cleanup();
         process.exit(0);
       }
+    }
+
+    // Update gist with initial output on first iteration
+    if (previousStripped === null && gistSender) {
+      gistSender.updateGist(currentStripped).catch(() => {});
     }
 
     // errexit: exit on non-zero
