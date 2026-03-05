@@ -1,33 +1,5 @@
 import { test, expect, describe, mock, beforeEach, afterEach } from "bun:test";
-import { deriveFilename, getGitHubToken, createGistSender, formatUptime, formatStats, type GistStats } from "./gist.ts";
-
-describe("deriveFilename", () => {
-  test("sanitizes a simple command", () => {
-    expect(deriveFilename("kubectl get pods")).toBe("kubectl-get-pods.txt");
-  });
-
-  test("removes special characters", () => {
-    expect(deriveFilename("cat /var/log/*.log | grep error")).toBe(
-      "cat-varloglog-grep-error.txt",
-    );
-  });
-
-  test("truncates long commands", () => {
-    const long = "a".repeat(100);
-    const result = deriveFilename(long);
-    expect(result).toBe("a".repeat(60) + ".txt");
-  });
-
-  test("falls back to 'output' for empty/all-special input", () => {
-    expect(deriveFilename("///")).toBe("output.txt");
-  });
-
-  test("collapses multiple spaces", () => {
-    expect(deriveFilename("echo   hello   world")).toBe(
-      "echo-hello-world.txt",
-    );
-  });
-});
+import { getGitHubToken, createGistSender, formatUptime, formatStats, type GistStats } from "./gist.ts";
 
 describe("getGitHubToken", () => {
   test("returns a non-empty string when gh is available", async () => {
@@ -78,18 +50,17 @@ describe("createGistSender", () => {
     expect(fetchOpts.method).toBe("POST");
     const body = JSON.parse(fetchOpts.body as string);
     expect(body.public).toBe(false);
-    expect(body.files["date.txt"].content).toBe("initial content");
+    expect(body.files["output.md"].content).toBe("initial content");
     expect(body.files["statistics.txt"].content).toContain("initializing");
   });
 
-  test("initialize with existing gist ID validates and discovers filename", async () => {
+  test("initialize with existing gist ID validates and uses output.md", async () => {
     // GET to fetch existing gist
     mockFetch.mockResolvedValueOnce({
       ok: true,
       json: () =>
         Promise.resolve({
           html_url: "https://gist.github.com/existing123",
-          files: { "old-name.txt": { content: "old" } },
         }),
     });
 
@@ -104,12 +75,12 @@ describe("createGistSender", () => {
     expect(getUrl).toBe("https://api.github.com/gists/existing123");
     expect(getOpts.method).toBeUndefined();
 
-    // Subsequent update uses discovered filename
+    // Subsequent update uses output.md
     mockFetch.mockResolvedValueOnce({ ok: true, json: () => Promise.resolve({}) });
     await sender.updateGist("real content");
     const [, patchOpts] = mockFetch.mock.calls[1]! as [string, RequestInit];
     const body = JSON.parse(patchOpts.body as string);
-    expect(body.files["old-name.txt"].content).toBe("real content");
+    expect(body.files["output.md"].content).toBe("real content");
   });
 
   const sampleStats: GistStats = {
@@ -143,7 +114,7 @@ describe("createGistSender", () => {
     expect(patchUrl).toBe("https://api.github.com/gists/abc123");
     expect(patchOpts.method).toBe("PATCH");
     const body = JSON.parse(patchOpts.body as string);
-    expect(body.files["echo-hello.txt"].content).toBe("updated content");
+    expect(body.files["output.md"].content).toBe("updated content");
     expect(body.files["statistics.txt"].content).toContain("changes:      2");
   });
 
@@ -164,7 +135,7 @@ describe("createGistSender", () => {
 
     const [, patchOpts] = mockFetch.mock.calls[1]! as [string, RequestInit];
     const body = JSON.parse(patchOpts.body as string);
-    expect(body.files["echo-hello.txt"].content).toBe("updated content");
+    expect(body.files["output.md"].content).toBe("updated content");
     expect(body.files["statistics.txt"]).toBeUndefined();
   });
 

@@ -34,15 +34,6 @@ export async function getGitHubToken(): Promise<string> {
   }
 }
 
-export function deriveFilename(commandStr: string): string {
-  const sanitized = commandStr
-    .replace(/[^a-zA-Z0-9_\- ]/g, "")
-    .trim()
-    .replace(/\s+/g, "-")
-    .slice(0, 60);
-  return (sanitized || "output") + ".txt";
-}
-
 export function formatUptime(ms: number): string {
   const secs = Math.floor(ms / 1000);
   const mins = Math.floor(secs / 60);
@@ -86,7 +77,7 @@ export function createGistSender(
   };
 
   let gistId: string | null = existingGistId ?? null;
-  let filename: string = deriveFilename(commandStr);
+  let filename: string = "output.md";
   let gistUrl: string | null = null;
 
   return {
@@ -97,22 +88,15 @@ export function createGistSender(
     async initialize(content: string): Promise<string> {
       try {
         if (existingGistId) {
-          // Validate existing gist and discover its filename
+          // Validate existing gist
           const res = await fetch(`${GITHUB_API}/gists/${existingGistId}`, {
             headers,
           });
           if (!res.ok) {
             throw new Error(`Failed to fetch gist ${existingGistId}: ${res.status} ${res.statusText}`);
           }
-          const data = (await res.json()) as { html_url: string; files: Record<string, unknown> };
+          const data = (await res.json()) as { html_url: string };
           gistUrl = data.html_url;
-          // Use the first existing filename that isn't the stats file
-          const existingFilename = Object.keys(data.files).find(
-            (f) => f !== STATS_FILENAME,
-          );
-          if (existingFilename) {
-            filename = existingFilename;
-          }
           return gistUrl;
         }
 
