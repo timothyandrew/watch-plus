@@ -3,8 +3,8 @@
 </p>
 
 <p align="center">
-  <strong>GNU <code>watch</code>, supercharged with email notifications.</strong><br/>
-  Know the instant your command output changes — in the terminal <em>and</em> your inbox.
+  <strong>GNU <code>watch</code>, supercharged with notifications.</strong><br/>
+  Know the instant your command output changes — in the terminal, your inbox, or a live GitHub Gist.
 </p>
 
 <p align="center">
@@ -17,18 +17,20 @@
 
 You're already running `watch` to keep an eye on things. But you can't stare at a terminal forever.
 
-**watch+** is a drop-in replacement for GNU `watch` that adds email alerts via [Resend](https://resend.com). Same flags, same behavior — plus a `--email` flag that changes everything.
+**watch+** is a drop-in replacement for GNU `watch` that adds email alerts via [Resend](https://resend.com) and live output to [GitHub Gists](https://gist.github.com). Same flags, same behavior — plus `--email` and `--gist` flags that change everything.
 
 ```mermaid
 flowchart TD
     Command["🐚 Your Shell Command"] -->|runs every N seconds| WatchPlus["⚡ watch+"]
     WatchPlus --> Terminal["🖥️ Terminal<br/>fullscreen with diff highlight"]
     WatchPlus -->|output changed?| Email["📧 Resend<br/>email alert"]
+    WatchPlus -->|every update| Gist["📝 GitHub Gist<br/>live output"]
 
     style Command fill:#1e293b,stroke:#475569,color:#e2e8f0
     style WatchPlus fill:#2d1f4e,stroke:#7c3aed,color:#e2e8f0
     style Terminal fill:#164e63,stroke:#06b6d4,color:#e2e8f0
     style Email fill:#4c1d95,stroke:#a78bfa,color:#e2e8f0
+    style Gist fill:#1a3a2a,stroke:#34d399,color:#e2e8f0
 ```
 
 ## Quickstart
@@ -65,6 +67,12 @@ watch+ --email me@example.com \
        -n 2 \
        "curl -s https://api.example.com/status"
 
+# 📝 Publish live output to a GitHub Gist
+watch+ --gist -n 5 "kubectl get pods"
+
+# 📝 Update an existing Gist
+watch+ --gist-id abc123def456 -n 5 "kubectl get pods"
+
 # 📊 Count errors in a log file
 watch+ -n 5 -- grep -c ERROR /var/log/app.log
 ```
@@ -89,7 +97,7 @@ All the flags you know. Fully compatible — swap `watch` for `watch+` in your s
 | `-p, --precise` | Attempt precise timing |
 | `-b, --beep` | Beep on change |
 
-### Email notifications (the + in watch+)
+### Email notifications
 
 | Flag | Description |
 |------|-------------|
@@ -98,6 +106,17 @@ All the flags you know. Fully compatible — swap `watch` for `watch+` in your s
 | `--cooldown <duration>` | Min time between emails — e.g. `30s`, `5m`, `1h` (default: `1m`) |
 | `--subject <text>` | Custom email subject |
 | `--api-key <key>` | Resend API key |
+
+Changes that occur during the cooldown period are queued and sent as a single email once the cooldown expires — no changes are dropped.
+
+### GitHub Gist output
+
+| Flag | Description |
+|------|-------------|
+| `--gist` | Create a new private Gist and push output to it on every update |
+| `--gist-id <id>` | Push output to an existing Gist |
+
+Requires the [GitHub CLI](https://cli.github.com/) (`gh auth login`). Output is written to `output.md` in the Gist, alongside a `statistics.txt` file with uptime, iteration count, and change count.
 
 ### Keyboard
 
@@ -115,12 +134,14 @@ graph LR
     Config --> Watch["Watch Loop<br/><small>execute → compare → render</small>"]
     Watch --> Terminal["Terminal<br/><small>fullscreen + diff highlight</small>"]
     Watch -->|output changed?| Email["Email<br/><small>Resend API + cooldown</small>"]
+    Watch -->|every update| Gist["Gist<br/><small>GitHub API</small>"]
 
     style CLI fill:#1e293b,stroke:#475569,color:#e2e8f0
     style Config fill:#1e293b,stroke:#475569,color:#e2e8f0
     style Watch fill:#2d1f4e,stroke:#7c3aed,color:#e2e8f0
     style Terminal fill:#164e63,stroke:#06b6d4,color:#e2e8f0
     style Email fill:#4c1d95,stroke:#a78bfa,color:#e2e8f0
+    style Gist fill:#1a3a2a,stroke:#34d399,color:#e2e8f0
 ```
 
 | Module | Responsibility |
@@ -129,7 +150,8 @@ graph LR
 | **config.ts** | Loads `~/.watch+/config.json`, merges CLI + env + config with correct priority |
 | **watch.ts** | Core loop — executes command, diffs output, renders fullscreen terminal UI |
 | **diff.ts** | Change detection, unified diff generation, HTML formatting for emails |
-| **email.ts** | Sends notifications via Resend with cooldown throttling |
+| **email.ts** | Sends notifications via Resend with cooldown throttling and queuing |
+| **gist.ts** | Creates/updates GitHub Gists via the GitHub API with statistics tracking |
 
 ## Configuration
 
