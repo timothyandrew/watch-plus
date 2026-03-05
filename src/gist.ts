@@ -106,13 +106,13 @@ export function createGistSender(
           }
           const data = (await res.json()) as { html_url: string; files: Record<string, unknown> };
           gistUrl = data.html_url;
-          // Use the first existing filename
-          const existingFilename = Object.keys(data.files)[0];
+          // Use the first existing filename that isn't the stats file
+          const existingFilename = Object.keys(data.files).find(
+            (f) => f !== STATS_FILENAME,
+          );
           if (existingFilename) {
             filename = existingFilename;
           }
-          // Update with initial content
-          await this.updateGist(content);
           return gistUrl;
         }
 

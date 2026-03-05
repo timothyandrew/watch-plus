@@ -82,7 +82,7 @@ describe("createGistSender", () => {
     expect(body.files["statistics.txt"].content).toContain("initializing");
   });
 
-  test("initialize with existing gist ID fetches then updates", async () => {
+  test("initialize with existing gist ID validates and discovers filename", async () => {
     // GET to fetch existing gist
     mockFetch.mockResolvedValueOnce({
       ok: true,
@@ -92,25 +92,24 @@ describe("createGistSender", () => {
           files: { "old-name.txt": { content: "old" } },
         }),
     });
-    // PATCH to update
-    mockFetch.mockResolvedValueOnce({ ok: true, json: () => Promise.resolve({}) });
 
     const sender = createGistSender("fake-token", "date", "existing123");
-    const url = await sender.initialize("new content");
+    const url = await sender.initialize("ignored");
 
     expect(url).toBe("https://gist.github.com/existing123");
-    expect(mockFetch).toHaveBeenCalledTimes(2);
+    expect(mockFetch).toHaveBeenCalledTimes(1);
 
-    // First call: GET
-    const [getUrl] = mockFetch.mock.calls[0]! as [string, RequestInit];
+    // Only a GET — no PATCH during initialize
+    const [getUrl, getOpts] = mockFetch.mock.calls[0]! as [string, RequestInit];
     expect(getUrl).toBe("https://api.github.com/gists/existing123");
+    expect(getOpts.method).toBeUndefined();
 
-    // Second call: PATCH with existing filename
-    const [patchUrl, patchOpts] = mockFetch.mock.calls[1]! as [string, RequestInit];
-    expect(patchUrl).toBe("https://api.github.com/gists/existing123");
-    expect(patchOpts.method).toBe("PATCH");
+    // Subsequent update uses discovered filename
+    mockFetch.mockResolvedValueOnce({ ok: true, json: () => Promise.resolve({}) });
+    await sender.updateGist("real content");
+    const [, patchOpts] = mockFetch.mock.calls[1]! as [string, RequestInit];
     const body = JSON.parse(patchOpts.body as string);
-    expect(body.files["old-name.txt"].content).toBe("new content");
+    expect(body.files["old-name.txt"].content).toBe("real content");
   });
 
   const sampleStats: GistStats = {
