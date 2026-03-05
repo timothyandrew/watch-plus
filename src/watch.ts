@@ -2,7 +2,7 @@ import { hostname } from "os";
 import type { WatchOptions, ExecutionResult } from "./types.ts";
 import { hasChanged } from "./diff.ts";
 import { createEmailSender } from "./email.ts";
-import { createGistSender, type GistSender } from "./gist.ts";
+import { createGistSender, type GistSender, type GistStats } from "./gist.ts";
 
 // ANSI helpers
 const ESC = "\x1b";
@@ -174,6 +174,16 @@ export async function startWatch(opts: WatchOptions): Promise<void> {
   const commandStr = opts.command.join(" ");
   const defaultSubject = `watch+: change detected in '${commandStr}'`;
 
+  // Gist stats tracking
+  const gistStats: GistStats = {
+    startedAt: new Date(),
+    iterations: 0,
+    changes: 0,
+    lastChangeAt: null,
+    command: commandStr,
+    intervalSecs: opts.interval,
+  };
+
   let previousOutput: string | null = null;
   let previousStripped: string | null = null;
   const permanentHighlights = new Set<number>();
@@ -235,6 +245,7 @@ export async function startWatch(opts: WatchOptions): Promise<void> {
     const execResult = executeCommand(opts);
     const currentOutput = execResult.stdout;
     const currentStripped = stripAnsi(currentOutput);
+    gistStats.iterations++;
 
     // Check for change
     const changed =
@@ -242,6 +253,8 @@ export async function startWatch(opts: WatchOptions): Promise<void> {
       hasChanged(previousStripped, currentStripped);
 
     if (changed) {
+      gistStats.changes++;
+      gistStats.lastChangeAt = new Date();
       // Beep
       if (opts.beep) {
         process.stdout.write(BELL);
@@ -264,7 +277,7 @@ export async function startWatch(opts: WatchOptions): Promise<void> {
 
       // Update gist
       if (gistSender) {
-        gistSender.updateGist(currentStripped).catch(() => {});
+        gistSender.updateGist(currentStripped, gistStats).catch(() => {});
       }
 
       // chgexit: exit on change
@@ -276,7 +289,7 @@ export async function startWatch(opts: WatchOptions): Promise<void> {
 
     // Update gist with initial output on first iteration
     if (previousStripped === null && gistSender) {
-      gistSender.updateGist(currentStripped).catch(() => {});
+      gistSender.updateGist(currentStripped, gistStats).catch(() => {});
     }
 
     // errexit: exit on non-zero

@@ -1,8 +1,17 @@
 const GITHUB_API = "https://api.github.com";
 
+export interface GistStats {
+  startedAt: Date;
+  iterations: number;
+  changes: number;
+  lastChangeAt: Date | null;
+  command: string;
+  intervalSecs: number;
+}
+
 export interface GistSender {
   initialize(content: string): Promise<string>;
-  updateGist(content: string): Promise<void>;
+  updateGist(content: string, stats?: GistStats): Promise<void>;
   gistUrl: string | null;
 }
 
@@ -33,6 +42,36 @@ export function deriveFilename(commandStr: string): string {
     .slice(0, 60);
   return (sanitized || "output") + ".txt";
 }
+
+export function formatUptime(ms: number): string {
+  const secs = Math.floor(ms / 1000);
+  const mins = Math.floor(secs / 60);
+  const hrs = Math.floor(mins / 60);
+  const days = Math.floor(hrs / 24);
+
+  if (days > 0) return `${days}d ${hrs % 24}h ${mins % 60}m`;
+  if (hrs > 0) return `${hrs}h ${mins % 60}m ${secs % 60}s`;
+  if (mins > 0) return `${mins}m ${secs % 60}s`;
+  return `${secs}s`;
+}
+
+export function formatStats(stats: GistStats): string {
+  const uptime = formatUptime(Date.now() - stats.startedAt.getTime());
+  const lines = [
+    `command:      ${stats.command}`,
+    `interval:     ${stats.intervalSecs}s`,
+    `started:      ${stats.startedAt.toISOString()}`,
+    `uptime:       ${uptime}`,
+    `iterations:   ${stats.iterations}`,
+    `changes:      ${stats.changes}`,
+  ];
+  if (stats.lastChangeAt) {
+    lines.push(`last change:  ${stats.lastChangeAt.toISOString()}`);
+  }
+  return lines.join("\n") + "\n";
+}
+
+const STATS_FILENAME = "statistics.txt";
 
 export function createGistSender(
   token: string,
@@ -84,7 +123,10 @@ export function createGistSender(
           body: JSON.stringify({
             public: false,
             description: `watch+: ${commandStr}`,
-            files: { [filename]: { content } },
+            files: {
+              [filename]: { content },
+              [STATS_FILENAME]: { content: "watch+: initializing...\n" },
+            },
           }),
         });
         if (!res.ok) {
@@ -101,15 +143,19 @@ export function createGistSender(
       }
     },
 
-    async updateGist(content: string): Promise<void> {
+    async updateGist(content: string, stats?: GistStats): Promise<void> {
       if (!gistId) return;
       try {
+        const files: Record<string, { content: string }> = {
+          [filename]: { content },
+        };
+        if (stats) {
+          files[STATS_FILENAME] = { content: formatStats(stats) };
+        }
         const res = await fetch(`${GITHUB_API}/gists/${gistId}`, {
           method: "PATCH",
           headers,
-          body: JSON.stringify({
-            files: { [filename]: { content } },
-          }),
+          body: JSON.stringify({ files }),
         });
         if (!res.ok) {
           process.stderr.write(
